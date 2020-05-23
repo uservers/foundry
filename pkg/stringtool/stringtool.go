@@ -39,6 +39,18 @@ func init() {
 
 // IsValidDomain Checks if a string is a vlaid domain name
 func IsValidDomain(domain string) error {
+	if err := checkDomainChars(domain); err != nil {
+		return err
+	}
+
+	// FIXME: Split el nombre
+
+	logrus.Debugf("%s is a valid domain name", domain)
+	return nil
+}
+
+// Check is string is a domain pattern
+func checkDomainChars(domain string) error {
 	if domain == "" {
 		return errors.New("Domain string is empty")
 	}
@@ -52,6 +64,33 @@ func IsValidDomain(domain string) error {
 		return fmt.Errorf("'%s' is not a valid domain name", domain)
 	}
 
-	logrus.Debugf("%s is a valid domain name", domain)
 	return nil
+}
+
+// SplitDomain regresa el dominio y la TLD ( que determina el tipo)
+func SplitDomain(domainName string) (sld, tld string, err error) {
+	if err := checkDomainChars(domainName); err != nil {
+		return sld, tld, err
+	}
+
+	cachos := strings.Split(domainName, ".")
+	if len(cachos) < 2 {
+		return sld, tld, errors.New("The string is not a valid domain name")
+	}
+
+	// Chequemos primero si es un mx
+	if cachos[len(cachos)-1] == "mx" {
+		second := cachos[len(cachos)-2]
+		if second == "com" || second == "net" || second == "org" || second == "gob" || second == "edu" {
+			if len(cachos) < 3 {
+				return sld, tld, errors.New("Third level .mx domain malformed")
+			}
+			return cachos[len(cachos)-3], "com.mx", nil
+		}
+
+		return second, "mx", nil
+	}
+
+	// Aqui un return generico para dominios con forma tld.sld
+	return cachos[len(cachos)-2], cachos[len(cachos)-1], nil
 }
