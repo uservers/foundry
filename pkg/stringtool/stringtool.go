@@ -37,7 +37,7 @@ func init() {
 	message.SetString(language.Spanish, "Domain string is empty", "La cadena del dominio está vacía")
 }
 
-// IsValidDomain Checks if a string is a vlaid domain
+// IsValidDomain Checks if a string is a vlaid domain name
 func IsValidDomain(domain string) error {
 	if domain == "" {
 		return errors.New("Domain string is empty")
