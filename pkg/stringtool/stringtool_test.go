@@ -22,8 +22,29 @@ import (
 	"github.com/uServers/foundry/pkg/stringtool"
 )
 
-func TestIsValidDomain(t *testing.T) {
+func TestSplitDomain(t *testing.T) {
+	sld, tld, err := stringtool.SplitDomain("uservers.com.mx")
+	require.Equal(t, tld, "com.mx")
+	require.Equal(t, sld, "uservers")
+	require.Nil(t, err)
 
+	sld, tld, err = stringtool.SplitDomain("uservers.mx")
+	require.Equal(t, tld, "mx")
+	require.Equal(t, sld, "uservers")
+	require.Nil(t, err)
+
+	sld, tld, err = stringtool.SplitDomain("uservers.com")
+	require.Equal(t, tld, "com")
+	require.Equal(t, sld, "uservers")
+	require.Nil(t, err)
+
+	sld, tld, err = stringtool.SplitDomain("with.subdomains.uservers.com")
+	require.Equal(t, tld, "com")
+	require.Equal(t, sld, "uservers")
+	require.Nil(t, err)
+}
+
+func TestIsValidDomain(t *testing.T) {
 	validDomain := stringtool.IsValidDomain("uservers.net")
 	validComMx := stringtool.IsValidDomain("uservers.com.mx")
 	endsWithDigit := stringtool.IsValidDomain("uservers1.com")
