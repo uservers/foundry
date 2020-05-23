@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package stringtools
+package stringtool
 
 import (
 	"errors"
@@ -28,26 +28,28 @@ import (
 )
 
 const (
-	domainPattern = `[-\.a-z0-9]+\.[a-z]{2,15}$`
+	// domainPattern = `^[a-z0-9]([-\.a-z0-9]*|[a-z]*)\.[a-z]{2,15}$`
+	// domainPattern = `^(?:[a-z0-9]+(?:[a-z0-9-]{0,61}[a-z0-9])?)?[a-z0-9]\.[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$`
+	domainPattern = `^(?:(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)?[a-z0-9]\.)+[a-z]{2,15}$`
 )
 
 func init() {
 	message.SetString(language.Spanish, "Domain string is empty", "La cadena del dominio está vacía")
 }
 
-// IsValidDomain Checks if a string is a vlaid domain
+// IsValidDomain Checks if a string is a vlaid domain name
 func IsValidDomain(domain string) error {
 	if domain == "" {
 		return errors.New("Domain string is empty")
 	}
 
 	domain = strings.ToLower(domain)
-
 	domainRegex := regexp.MustCompile(domainPattern)
+	// domainRegex.
 
 	if !domainRegex.MatchString(domain) {
 		logrus.Debugf("%s is not a valid domain name", domain)
-		return fmt.Errorf("%s is not a valid domain name", domain)
+		return fmt.Errorf("'%s' is not a valid domain name", domain)
 	}
 
 	logrus.Debugf("%s is a valid domain name", domain)
