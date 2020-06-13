@@ -17,10 +17,11 @@ limitations under the License.
 package stringtool
 
 import (
-	"errors"
 	"fmt"
 	"regexp"
 	"strings"
+
+	"github.com/pkg/errors"
 
 	"github.com/sirupsen/logrus"
 	"golang.org/x/text/language"
@@ -28,16 +29,16 @@ import (
 )
 
 const (
-	// domainPattern = `^[a-z0-9]([-\.a-z0-9]*|[a-z]*)\.[a-z]{2,15}$`
-	// domainPattern = `^(?:[a-z0-9]+(?:[a-z0-9-]{0,61}[a-z0-9])?)?[a-z0-9]\.[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$`
 	domainPattern = `^(?:(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)?[a-z0-9]\.)+[a-z]{2,15}$`
+	useridPattern = `^[a-z][a-z0-9]{5}$`
+	loginPattern  = `^[-_\.a-z0-9]{1,125}$`
 )
 
 func init() {
 	message.SetString(language.Spanish, "Domain string is empty", "La cadena del dominio está vacía")
 }
 
-// IsValidDomain Checks if a string is a vlaid domain name
+// IsValidDomain Checks if a string is a valid domain name
 func IsValidDomain(domain string) error {
 	if err := checkDomainChars(domain); err != nil {
 		return err
@@ -93,4 +94,80 @@ func SplitDomain(domainName string) (sld, tld string, err error) {
 
 	// Aqui un return generico para dominios con forma tld.sld
 	return cachos[len(cachos)-2], cachos[len(cachos)-1], nil
+}
+
+// ParseStorable divide un dominio en login + userid
+func ParseStorable(storable string) (login, userid string, err error) {
+	if len(storable) <= 6 {
+		return "", "", errors.New("string is not a well formed storable")
+	}
+	if string(storable[len(storable)-7]) != "@" {
+		return "", "", errors.New("string is not a well formed storable, cant find @")
+	}
+
+	// Checa que sea un userdi valido
+	userid = storable[len(storable)-6:]
+	if err := IsValidUserID(userid); err != nil {
+		return "", "", errors.Wrap(err, "while checking the storable userid")
+	}
+
+	// Checa que sea un login valido
+	login = storable[0 : len(storable)-7]
+	if err := IsValidLogin(login); err != nil {
+		return "", "", errors.Wrap(err, "while checking the storable login")
+	}
+
+	return login, userid, nil
+}
+
+// IsValidUserID Checks if a string is a valid userid
+func IsValidUserID(userid string) error {
+
+	useridRegex := regexp.MustCompile(useridPattern)
+	// domainRegex.
+
+	if !useridRegex.MatchString(userid) {
+		logrus.Debugf("%s is not a valid domain name", userid)
+		return errors.New("not a valid userid")
+	}
+
+	return nil
+}
+
+// IsValidLogin check if satring is a valid user login
+func IsValidLogin(login string) error {
+	if login == "" {
+		return errors.New("empty string is not an valid login")
+	}
+
+	loginRegex := regexp.MustCompile(loginPattern)
+	if !loginRegex.MatchString(login) {
+		logrus.Debugf("%s is not a valid login name", login)
+		return errors.New("not a valid login")
+	}
+
+	if strings.Contains(login, " ") {
+		logrus.Debugf("%s contains spaces", login)
+		return errors.New("string is not a valid string, contains spaces")
+	}
+
+	if strings.ContainsAny(string(login[0]), "-_.") {
+		return errors.New("login cannot begin with a dash underscore or period")
+	}
+
+	if strings.ContainsAny(string(login[len(login)-1]), "-_.") {
+		return errors.New("login cannot end with a dash underscore or period")
+	}
+
+	if len(login) == 1 && strings.ContainsAny(login, "0123456789") {
+		return errors.New("login cannot be a single digit")
+	}
+
+	loginDigits := regexp.MustCompile(`^[0-9]+$`)
+	if loginDigits.MatchString(login) {
+		return errors.New("login cannot be a number")
+	}
+
+	logrus.Debugf("%s is a valid login", login)
+	return nil
 }
