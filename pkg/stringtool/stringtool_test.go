@@ -73,3 +73,32 @@ func TestIsValidDomain(t *testing.T) {
 
 	// require.Equal(t, tc.expected, actual)
 }
+
+func TestParseStorable(t *testing.T) {
+	// String valido
+	login, userid, err := stringtool.ParseStorable("user@exampl")
+	require.Nil(t, err)
+	require.Equal(t, "user", login)
+	require.Equal(t, "exampl", userid)
+
+	// String muy corto
+	login, userid, err = stringtool.ParseStorable("too@short")
+	require.NotNil(t, err)
+
+	// String muy corto
+	login, userid, err = stringtool.ParseStorable("1@short")
+	require.NotNil(t, err, "No pude cachar login corto")
+
+	// User numerico
+	login, userid, err = stringtool.ParseStorable("1@short")
+	require.NotNil(t, err, "No pude cachar login corto")
+
+	// Login invalido
+	login, userid, err = stringtool.ParseStorable(".user@userid")
+	require.NotNil(t, err, "Imposible cachar '.user' como login malo")
+
+	// Userid invalido
+	login, userid, err = stringtool.ParseStorable("username@not-bn")
+	require.NotNil(t, err, "Falle encontrar 'not-bn' como mal userid")
+
+}
