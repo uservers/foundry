@@ -19,6 +19,7 @@ package stringtool
 import (
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -32,6 +33,8 @@ const (
 	domainPattern = `^(?:(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)?[a-z0-9]\.)+[a-z]{2,15}$`
 	useridPattern = `^[a-z][a-z0-9]{5}$`
 	loginPattern  = `^[-_\.a-z0-9]{1,125}$`
+	uuidPattern   = `^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`
+	curpPattern   = `^([A-Z][AEIOUX][A-Z]{2}\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])[HM](?:AS|B[CS]|C[CLMSH]|D[FG]|G[TR]|HG|JC|M[CNS]|N[ETL]|OC|PL|Q[TR]|S[PLR]|T[CSL]|VZ|YN|ZS)[B-DF-HJ-NP-TV-Z]{3}[A-Z\d])(\d)$`
 )
 
 func init() {
@@ -170,4 +173,85 @@ func IsValidLogin(login string) error {
 
 	logrus.Debugf("%s is a valid login", login)
 	return nil
+}
+
+// IsValidUUID Indica si la string es un UUID valido
+func IsValidUUID(uuid string) error {
+	if len(uuid) != 36 {
+		return errors.New("string is not a valid UUID")
+	}
+	loginRegex := regexp.MustCompile(uuidPattern)
+	if !loginRegex.MatchString(uuid) {
+		logrus.Debugf("%s is not a valid UUID", uuid)
+		return errors.New("not a valid UUID")
+	}
+
+	return nil
+}
+
+// IsValidCURP Indica si la string es un curp valido
+func IsValidCURP(curp string) error {
+	// Checa el largo
+	if len(curp) != 18 {
+		return errors.New("string is not a valid CURP")
+	}
+	// Checa que empate en la regexp
+	loginRegex := regexp.MustCompile(curpPattern)
+	if !loginRegex.MatchString(curp) {
+		logrus.Debugf("%s is not a valid CURP", curp)
+		return errors.New("not a valid CURP")
+	}
+
+	// Ahora, el digito verificador:
+	chars := `0123456789ABCDEFGHIJKLMNNOPQRSTUVWXYZ`
+	// Otra version dice asi:
+	// chars := "0123456789ABCDEFGHIJKLMÑNOPQRSTUVWXYZ"
+	var suma, digito int
+	for i := 0; i < 17; i++ {
+		charIndex := strings.Index(chars, string(curp[i]))
+		if string(curp[i]) == "Ñ" {
+			charIndex = 23
+		}
+		if charIndex == -1 {
+			return errors.New("string contains invalid chars")
+		}
+		// Hay que multiplcar el valor de la tabla por
+		// la posicion en la cadena (de 18 para abajo)
+		suma = suma + (charIndex * (18 - i))
+		// fmt.Printf("Char: %s Posicion: %d Valor: %d\n", string(curp[i]), (18 - i), charIndex)
+	}
+
+	digito = 10 - (suma % 10)
+	if digito == 10 {
+		digito = 0
+	}
+	// fmt.Printf("Digito es %d vs %s", digito, string(curp[17]))
+	lastInt, err := strconv.Atoi(string(curp[17]))
+	if err != nil {
+		return errors.New("Imposible encontrar digito")
+	}
+	if lastInt != digito {
+		return errors.New("string is not a well formed curp")
+	}
+	return nil
+
+	/*
+
+			// GAVA760210HDFRYD06
+		    //Validar que coincida el dígito verificador
+		    function digitoVerificador(curp17) {
+		        // Fuente https://consultas.curp.gob.mx/CurpSP/
+		        var diccionario  = "0123456789ABCDEFGHIJKLMNÑOPQRSTUVWXYZ",
+		            lngSuma      = 0.0,
+		            lngDigito    = 0.0;
+		        for(var i=0; i<17; i++)
+		            lngSuma = lngSuma + diccionario.indexOf(curp17.charAt(i)) * (18 - i);
+		        lngDigito = 10 - lngSuma % 10;
+		        if (lngDigito == 10) return 0;
+		        return lngDigito;
+		    }
+
+		    if (validado[2] != digitoVerificador(validado[1]))
+		    	return false;
+	*/
 }
