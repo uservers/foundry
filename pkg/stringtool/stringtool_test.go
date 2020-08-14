@@ -74,6 +74,25 @@ func TestIsValidDomain(t *testing.T) {
 	// require.Equal(t, tc.expected, actual)
 }
 
+func TestIsValidUUID(t *testing.T) {
+	require.Nil(t, stringtool.IsValidUUID("8f3d9af5-e51f-4d5c-9c1b-294466af8492"))
+	require.NotNil(t, stringtool.IsValidUUID("8f3d9af5-e51f-4d5c-9c1b-294466af849")) // Longer
+	require.NotNil(t, stringtool.IsValidUUID("8f3d9af5-e51f-4d5c-9c1b-2944"))        // Shorter
+	require.Nil(t, stringtool.IsValidUUID("00000000-0000-0000-0000-000000000000"))   // Null UUID
+	require.NotNil(t, stringtool.IsValidUUID("8f3d9af5-e51f-4d5c-9c1b-2A4466af849")) // Invalud char
+	require.NotNil(t, stringtool.IsValidUUID(""))                                    // Empry String
+}
+
+func TestIsValidCURP(t *testing.T) {
+	// Curps de prueba publicados aqui:
+	// http://www.itchihuahua.edu.mx/wp-content/uploads/2016/02/aceptados_e@d_febrero_2016.pdf
+	require.Nil(t, stringtool.IsValidCURP("AIHP911101MCHRRR03"))    // Valido Mujer
+	require.Nil(t, stringtool.IsValidCURP("HOAE940218HCHLGR02"))    // Valido Hombre
+	require.NotNil(t, stringtool.IsValidCURP("HOAE940218WCHLGR02")) // No es H/M
+	require.NotNil(t, stringtool.IsValidCURP("HOAE940218WCHLGR03")) // Digito mal
+	require.NotNil(t, stringtool.IsValidCURP("HOAE943618WCHLGR03")) // Fecha Mal
+}
+
 func TestParseStorable(t *testing.T) {
 	// String valido
 	login, userid, err := stringtool.ParseStorable("user@exampl")
