@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/sirupsen/logrus"
-	"github.com/uServers/foundry/pkg/stringtool"
+	"github.com/uservers/foundry/pkg/stringtool"
 )
 
 func main() {
